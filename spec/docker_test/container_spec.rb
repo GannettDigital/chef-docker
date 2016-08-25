@@ -142,7 +142,7 @@ describe 'docker_test::container' do
 
     it 'run execute[red_light]' do
       expect(chef_run).to run_execute('red_light').with(
-        command:  'docker run --name red_light -d busybox nc -ll -p 42 -e /bin/cat'
+        command:  'docker run --name red_light -d busybox sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
       )
     end
 
@@ -176,7 +176,7 @@ describe 'docker_test::container' do
 
     it 'run execute[restarter]' do
       expect(chef_run).to run_execute('restarter').with(
-        command: 'docker run --name restarter -d busybox nc -ll -p 69 -e /bin/cat'
+        command: 'docker run --name restarter -d busybox sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"'
       )
     end
 
@@ -595,10 +595,6 @@ describe 'docker_test::container' do
         links: ['another_link_source:derp']
       )
     end
-
-    it 'creates file[/marker_container_remover]' do
-      expect(chef_run).to create_file('/marker_container_remover')
-    end
   end
 
   context 'testing volume removal' do
@@ -689,7 +685,7 @@ describe 'docker_test::container' do
       expect(chef_run).to run_docker_container('ulimits').with(
         repo: 'alpine',
         tag: '3.1',
-        command: 'nc -ll -p 778 -e /bin/cat',
+        command: 'sh -c "trap exit 0 SIGTERM; while :; do sleep 1; done"',
         port: '778:778',
         cap_add: ['SYS_RESOURCE'],
         ulimits: [
@@ -851,11 +847,29 @@ describe 'docker_test::container' do
     end
 
     it 'run_if_missing docker_container[pid_mode]' do
-      expect(chef_run).to run_if_missing_docker_container('pid_mode')
+      expect(chef_run).to run_if_missing_docker_container('pid_mode').with(
+        pid_mode: 'host'
+      )
     end
 
     it 'run_if_missing docker_container[ipc_mode]' do
-      expect(chef_run).to run_if_missing_docker_container('ipc_mode')
+      expect(chef_run).to run_if_missing_docker_container('ipc_mode').with(
+        ipc_mode: 'host'
+      )
+    end
+
+    it 'run_if_missing docker_container[uts_mode]' do
+      expect(chef_run).to run_if_missing_docker_container('uts_mode').with(
+        uts_mode: 'host'
+      )
+    end
+  end
+
+  context 'testing ro_rootfs' do
+    it 'creates read-only rootfs' do
+      expect(chef_run).to run_if_missing_docker_container('ro_rootfs').with(
+        ro_rootfs: true
+      )
     end
   end
 end

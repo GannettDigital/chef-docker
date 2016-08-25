@@ -203,6 +203,10 @@ if defined?(ChefSpec)
     ChefSpec::Matchers::ResourceMatcher.new(:docker_image, :save, resource_name)
   end
 
+  def load_docker_image(resource_name)
+    ChefSpec::Matchers::ResourceMatcher.new(:docker_image, :load, resource_name)
+  end
+
   ##################
   # docker_container
   ##################
@@ -254,10 +258,6 @@ if defined?(ChefSpec)
 
   def remove_docker_container(resource_name)
     ChefSpec::Matchers::ResourceMatcher.new(:docker_container, :remove, resource_name)
-  end
-
-  def remove_link_docker_container(resource_name)
-    ChefSpec::Matchers::ResourceMatcher.new(:docker_container, :remove_link, resource_name)
   end
 
   def commit_docker_container(resource_name)
@@ -320,4 +320,12 @@ if defined?(ChefSpec)
     ChefSpec::Matchers::ResourceMatcher.new(:docker_volume, :remove, resource_name)
   end
 
+  ###############
+  # docker_exec
+  ###############
+  ChefSpec.define_matcher :docker_exec
+
+  def run_docker_exec(resource_name)
+    ChefSpec::Matchers::ResourceMatcher.new(:docker_exec, :run, resource_name)
+  end
 end

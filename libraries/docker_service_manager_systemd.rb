@@ -4,7 +4,7 @@ module DockerCookbook
 
     provides :docker_service_manager, platform: 'fedora'
 
-    provides :docker_service_manager, platform: %w(redhat centos scientific) do |node| # ~FC005
+    provides :docker_service_manager, platform: %w(redhat centos scientific oracle) do |node| # ~FC005
       node['platform_version'].to_f >= 7.0
     end
 
@@ -16,36 +16,8 @@ module DockerCookbook
       node['platform_version'].to_f >= 15.04
     end
 
-    property :service_timeout, Integer, default: 20
-
-    def libexec_dir
-      return '/usr/libexec/docker' if node['platform_family'] == 'rhel'
-      '/usr/lib/docker'
-    end
-
     action :start do
-      directory libexec_dir do
-        owner 'root'
-        group 'root'
-        mode '0755'
-        action :create
-      end
-
-      # this script is called by the main systemd unit file, and
-      # spins around until the service is actually up and running.
-      template "#{libexec_dir}/#{docker_name}-wait-ready" do
-        source 'systemd/docker-wait-ready.erb'
-        owner 'root'
-        group 'root'
-        mode '0755'
-        variables(
-          docker_cmd: docker_cmd,
-          libexec_dir: libexec_dir,
-          service_timeout: service_timeout
-        )
-        cookbook 'docker'
-        action :create
-      end
+      create_docker_wait_ready
 
       # stock systemd unit file
       template "/lib/systemd/system/#{docker_name}.service" do
@@ -53,7 +25,10 @@ module DockerCookbook
         owner 'root'
         group 'root'
         mode '0644'
-        variables(docker_name: docker_name)
+        variables(
+          docker_name: docker_name,
+          docker_socket: connect_socket.sub(%r{unix://|fd://}, '')
+        )
         cookbook 'docker'
         action :create
         not_if { docker_name == 'default' && ::File.exist?('/lib/systemd/system/docker.service') }
@@ -65,7 +40,10 @@ module DockerCookbook
         owner 'root'
         group 'root'
         mode '0644'
-        variables(docker_name: docker_name)
+        variables(
+          docker_name: docker_name,
+          docker_socket: connect_socket.sub(%r{unix://|fd://}, '')
+        )
         cookbook 'docker'
         action :create
         not_if { docker_name == 'default' && ::File.exist?('/lib/systemd/system/docker.socket') }
@@ -80,12 +58,11 @@ module DockerCookbook
         variables(
           config: new_resource,
           docker_daemon_cmd: docker_daemon_cmd,
-          docker_name: docker_name,
-          libexec_dir: libexec_dir
+          docker_wait_ready: "#{libexec_dir}/#{docker_name}-wait-ready"
         )
         cookbook 'docker'
         notifies :run, 'execute[systemctl daemon-reload]', :immediately
-        notifies :restart, new_resource
+        notifies :restart, new_resource, :immediately
         action :create
       end
 
@@ -101,7 +78,7 @@ module DockerCookbook
         )
         cookbook 'docker'
         notifies :run, 'execute[systemctl daemon-reload]', :immediately
-        notifies :restart, new_resource
+        notifies :restart, new_resource, :immediately
         action :create
       end
 

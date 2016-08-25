@@ -37,7 +37,7 @@ module DockerCookbook
     property :graph, [String, nil]
     property :host, [String, Array], coerce: proc { |v| coerce_host(v) }
     property :icc, [Boolean, nil]
-    property :insecure_registry, [String, nil]
+    property :insecure_registry, [Array, String, nil], coerce: proc { |v| coerce_insecure_registry(v) }
     property :ip, [IPV4_ADDR, IPV6_ADDR, nil]
     property :ip_forward, [Boolean, nil]
     property :ipv4_forward, Boolean, default: true
@@ -58,6 +58,10 @@ module DockerCookbook
     property :default_ulimit, ArrayType
     property :userland_proxy, [Boolean, nil]
     property :disable_legacy_registry, [Boolean, nil]
+    property :userns_remap, [String, nil]
+
+    # These are unvalidated daemon arguments passed in as a string.
+    property :misc_opts, [String, nil]
 
     # environment variables to set before running daemon
     property :http_proxy, [String, nil]
@@ -68,6 +72,9 @@ module DockerCookbook
     # logging
     property :logfile, String, default: '/var/log/docker.log'
 
+    # docker-wait-ready timeout
+    property :service_timeout, Integer, default: 20
+
     allowed_actions :start, :stop, :restart
 
     alias label labels
@@ -76,5 +83,35 @@ module DockerCookbook
     alias tlskey tls_server_key
     alias tlsverify tls_verify
     alias run_group group
+
+    declare_action_class.class_eval do
+      def libexec_dir
+        return '/usr/libexec/docker' if node['platform_family'] == 'rhel'
+        '/usr/lib/docker'
+      end
+
+      def create_docker_wait_ready
+        directory libexec_dir do
+          owner 'root'
+          group 'root'
+          mode '0755'
+          action :create
+        end
+
+        template "#{libexec_dir}/#{docker_name}-wait-ready" do
+          source 'default/docker-wait-ready.erb'
+          owner 'root'
+          group 'root'
+          mode '0755'
+          variables(
+            docker_cmd: docker_cmd,
+            libexec_dir: libexec_dir,
+            service_timeout: service_timeout
+          )
+          cookbook 'docker'
+          action :create
+        end
+      end
+    end
   end
 end

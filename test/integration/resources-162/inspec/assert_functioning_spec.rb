@@ -10,24 +10,28 @@ volumes_filter = '{{ .Volumes }}' if docker_version =~ /1.7/
 volumes_filter = '{{ .Config.Volumes }}' if docker_version =~ /1.8/
 volumes_filter = '{{ .Config.Volumes }}' if docker_version =~ /1.9/
 volumes_filter = '{{ .Config.Volumes }}' if docker_version =~ /1.10/
+volumes_filter = '{{ .Config.Volumes }}' if docker_version =~ /1.11/
 
 overrides_volumes_value = %r{map\[\/home:map\[\]\]} if docker_version =~ /1.6/
 overrides_volumes_value = %r{map\[/home:{}\]} if docker_version =~ /1.7/
 overrides_volumes_value = %r{map\[/home:{}\]} if docker_version =~ /1.8/
 overrides_volumes_value = %r{map\[/home:{}\]} if docker_version =~ /1.9/
 overrides_volumes_value = %r{map\[/home:{}\]} if docker_version =~ /1.10/
+overrides_volumes_value = %r{map\[/home:{}\]} if docker_version =~ /1.11/
 
 mounts_filter = '{{ .Volumes }}' if docker_version =~ /1.6/
 mounts_filter = '{{ .Volumes }}' if docker_version =~ /1.7/
 mounts_filter = '{{ .Mounts }}' if docker_version =~ /1.8/
 mounts_filter = '{{ .Mounts }}' if docker_version =~ /1.9/
 mounts_filter = '{{ .Mounts }}' if docker_version =~ /1.10/
+mounts_filter = '{{ .Mounts }}' if docker_version =~ /1.11/
 
 uber_options_network_mode = 'default' if docker_version =~ /1.6/
 uber_options_network_mode = 'bridge' if docker_version =~ /1.7/
 uber_options_network_mode = 'default' if docker_version =~ /1.8/
 uber_options_network_mode = 'default' if docker_version =~ /1.9/
 uber_options_network_mode = 'default' if docker_version =~ /1.10/
+uber_options_network_mode = 'default' if docker_version =~ /1.11/
 
 nil_string = '<no value>' if docker_version =~ /1.6/
 nil_string = '<nil>' if docker_version =~ /1.7/
@@ -93,11 +97,18 @@ describe command('docker images') do
   its(:stdout) { should_not match(/^slackware\s.*latest/) }
 end
 
-# docker_image[save hello-world]
+# docker_image[save cirros]
 
-describe file('/hello-world.tar') do
+describe file('/cirros.tar') do
   it { should be_file }
   it { should be_mode 0644 }
+end
+
+# docker_image[load cirros]
+
+describe command('docker images') do
+  its(:exit_status) { should eq 0 }
+  its(:stdout) { should match(/^cirros\s.*latest/) }
 end
 
 # docker_image[image-1]
@@ -867,6 +878,18 @@ describe command("docker inspect --format '{{ .HostConfig.IpcMode }}' ipc_mode")
   its(:stdout) { eq 'host' }
 end
 
+# docker_container[uts_mode]
+
+describe command("docker ps -af 'name=uts_mode$'") do
+  its(:exit_status) { should eq 0 }
+  its(:stdout) { should match(/Exited \(0\)/) }
+end
+
+describe command("docker inspect --format '{{ .HostConfig.UTSMode }}' uts_mode") do
+  its(:exit_status) { should eq 0 }
+  its(:stdout) { eq 'host' }
+end
+
 # containers shouldnt be killed, validating only one was force killed
 
 describe command("docker ps -qaf 'exited=137' | wc -l") do
@@ -877,4 +900,17 @@ end
 describe command("docker ps -af 'exited=137'") do
   its(:exit_status) { should eq 0 }
   its(:stdout) { should match(/kill_after/) }
+end
+
+# docker_exec[busybox_exec]
+
+describe command('docker exec busybox_exec ls /tmp') do
+  its(:exit_status) { should eq 0 }
+  its(:stdout) { should match(/onefile/) }
+  its(:stdout) { should match(/twofile/) }
+end
+
+describe command("docker inspect --format '{{ .HostConfig.ReadonlyRootfs }}' ro_rootfs") do
+  its(:exit_status) { should eq 0 }
+  its(:stdout) { eq 'true' }
 end

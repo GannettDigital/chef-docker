@@ -72,6 +72,7 @@ module DockerCookbook
     property :remove_volumes, Boolean
     property :restart_maximum_retry_count, Fixnum, default: 0
     property :restart_policy, String, default: 'no'
+    property :ro_rootfs, Boolean, default: false
     property :security_opts, [String, ArrayType]
     property :signal, String, default: 'SIGTERM'
     property :stdin_once, Boolean, default: false, desired_state: false
@@ -79,6 +80,8 @@ module DockerCookbook
     property :tty, Boolean, default: false
     property :ulimits, [Array, nil], coerce: proc { |v| coerce_ulimits(v) }
     property :user, String, default: ''
+    property :userns_mode, String, default: ''
+    property :uts_mode, String, default: ''
     property :volumes, PartialHashType, default: {}, coerce: proc { |v| coerce_volumes(v) }
     property :volumes_from, ArrayType
     property :working_dir, [String, NilClass], default: ''
@@ -171,11 +174,11 @@ module DockerCookbook
          restart_policy != 'always' &&
          restart_policy != 'unless-stopped' &&
          restart_policy != 'on-failure'
-        raise Chef::Exceptions::Validationraiseed, 'restart_policy must be either no, always, unless-stopped, or on-raiseure.'
+        raise Chef::Exceptions::ValidationFailed, 'restart_policy must be either no, always, unless-stopped, or on-raiseure.'
       end
 
       if autoremove == true && (property_is_set?(:restart_policy) && restart_policy != 'no')
-        raise Chef::Exceptions::Validationraiseed, 'Conflicting options restart_policy and autoremove.'
+        raise Chef::Exceptions::ValidationFailed, 'Conflicting options restart_policy and autoremove.'
       end
 
       if detach == true &&
@@ -185,7 +188,7 @@ module DockerCookbook
           attach_stdout == true ||
           stdin_once == true
          )
-        raise Chef::Exceptions::Validationraiseed, 'Conflicting options detach, attach_stderr, attach_stdin, attach_stdout, stdin_once.'
+        raise Chef::Exceptions::ValidationFailed, 'Conflicting options detach, attach_stderr, attach_stdin, attach_stdout, stdin_once.'
       end
 
       if network_mode == 'host' &&
@@ -196,7 +199,7 @@ module DockerCookbook
           !(mac_address.nil? || mac_address.empty?) ||
           !(extra_hosts.nil? || extra_hosts.empty?)
          )
-        raise Chef::Exceptions::Validationraiseed, 'Cannot specify hostname, dns, dns_search, mac_address, or extra_hosts when network_mode is host.'
+        raise Chef::Exceptions::ValidationFailed, 'Cannot specify hostname, dns, dns_search, mac_address, or extra_hosts when network_mode is host.'
       end
 
       if network_mode == 'container' &&
@@ -211,7 +214,7 @@ module DockerCookbook
           !(publish_all_ports.nil? || publish_all_ports.empty?) ||
           !port.nil?
          )
-        raise Chef::Exceptions::Validationraiseed, 'Cannot specify hostname, dns, dns_search, mac_address, extra_hosts, exposed_ports, port_bindings, publish_all_ports, port when network_mode is container.'
+        raise Chef::Exceptions::ValidationFailed, 'Cannot specify hostname, dns, dns_search, mac_address, extra_hosts, exposed_ports, port_bindings, publish_all_ports, port when network_mode is container.'
       end
     end
 
@@ -273,7 +276,10 @@ module DockerCookbook
                 'Name'              => restart_policy,
                 'MaximumRetryCount' => restart_maximum_retry_count
               },
+              'ReadonlyRootfs'  => ro_rootfs,
               'Ulimits'         => ulimits_to_hash,
+              'UsernsMode'      => userns_mode,
+              'UTSMode'         => uts_mode,
               'VolumesFrom'     => volumes_from
             }
           }
@@ -288,9 +294,9 @@ module DockerCookbook
       converge_by "starting #{container_name}" do
         with_retries do
           container.start
-          timeout ? container.wait(timeout) : container.wait unless detach
+          timeout ? container.wait(timeout) : container.wait unless detach # rubocop: disable Style/IfUnlessModifierOfIfUnless
         end
-        wait_running_state(true)
+        wait_running_state(true) if detach
       end
     end
 
@@ -299,11 +305,13 @@ module DockerCookbook
       kill_after_str = " (will kill after #{kill_after}s)" if kill_after != -1
       converge_by "stopping #{container_name} #{kill_after_str}" do
         begin
-          with_retries { container.stop!('timeout' => kill_after) }
+          with_retries do
+            container.stop!('timeout' => kill_after)
+            wait_running_state(false)
+          end
         rescue Docker::Error::TimeoutError
-          raise Docker::Error::TimeoutError, "Container raiseed to stop, consider adding kill_after to the container #{container_name}"
+          raise Docker::Error::TimeoutError, "Container failed to stop, consider adding kill_after to the container #{container_name}"
         end
-        wait_running_state(false)
       end
     end
 
@@ -367,15 +375,6 @@ module DockerCookbook
 
     action :remove do
       call_action(:delete)
-    end
-
-    action :remove_link do
-      # Help! I couldn't get this working from the CLI in docker 1.6.2.
-      # It's of dubious usefulness, and it looks like this stuff is
-      # changing in 1.7.x anyway.
-      converge_by "removing links for #{container_name}" do
-        Chef::Log.info(':remove_link not currently implemented')
-      end
     end
 
     action :commit do
