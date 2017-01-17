@@ -1,5 +1,86 @@
 # Docker Cookbook Changelog
 
+This file is used to list changes made in each version of the docker cookbook.
+
+## 2.13.9 (2016-12-29)
+- 793 - Removing service restarts due to chef-client behavior changes.
+
+## 2.13.8 (2016-12-28)
+- #794 - network mode bridge
+- removing emacs package in upstart provider
+- Adding dokken / travis test matrix
+
+## 2.13.7 (2016-12-24)
+- adding additional logging drivers
+- adding action :reload
+
+## 2.13.6 (2016-12-22)
+- adding ip_address support for docker_containers
+- adding volume_driver support
+
+## 2.13.5 (2016-12-21)
+- Temporary work around for broke upstart provider in chef-client
+- Fixing package name for ubuntu version later than 1.12.3
+
+## 2.13.4 (2016-12-20)
+- Fixing comparison operator docker daemon args for versions < 1.12
+
+## 2.13.3 (2016-12-20)
+- 792 - Reverting 791 fix
+
+## 2.13.2 (2016-12-20)
+- 791 - Fix logic bug in docker_service daemon args calculation
+
+## 2.13.1 (2016-12-19)
+- #786 - Adding options hash to docker_volume connection
+- #787 - Adding wait loop to docker_service_manager_execute :stop
+
+## 2.13.0 (2016-11-25)
+- Adding sysctl property to docker_container resource
+
+## 2.12.0 (2016-11-25)
+- Updating compat_resource dep to 12.16.2
+- Updating docker-api gem dep 1.32.1
+
+## 2.11.1 (2016-11-24)
+- Fix for #701 - Revert commit that caused restart loops in systemd provider
+
+## 2.11.0 (2016-11-23)
+- make systemd MountFlags configurable
+- make running wait time configurable
+
+## 2.10.0 (2016-11-23)
+- Implement network connect/disconnect
+- Fixed dns options mutual exclusion
+- Misc test harness cleanup
+
+## 2.9.10 (2016-11-14)
+-renaming systemd_conf to systemd_args due to a conflict with systemd cookbook
+
+## 2.9.9 (2016-11-14)
+-Fixing resource idempotence in labels property
+-Fix regression introduced by #741, breaking Debian installation
+-Added ro_rootfs => ReadonlyRootfs special cases mapping
+-Enable systemd options as a docker_service attribute
+
+## 2.9.8 (2016-11-08)
+- Fixed a typo in an error message
+- Enable tarball install through docker_service
+- option log_opt is defined as --log-opt value1 --log-opt value2 instead of --log-opt=value1 --log-opt=value2
+- Depend on a working compat_resource cookbook
+
+## 2.9.7 (2016-10-14)
+- Require the most recent compat_resource
+- Get foodcritic passing
+- Update the Rakefile and use cookstyle
+- Use cookstyle in Travis
+- Add matchers for docker_installation_tarball
+
+## v2.9.6
+- entrypoint not entry_point README
+- dockerd binary on 1.12+ for upstart
+- fix docker.socket for systemd
+
 ## v2.9.5
 - bumping docker-api gem
 

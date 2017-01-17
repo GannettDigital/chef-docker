@@ -1,6 +1,6 @@
 # Two variables, one recipe.
 caname = 'docker_service_default'
-caroot = "/tmp/kitchen/#{caname}"
+caroot = "/ca/#{caname}"
 
 ################
 # action :create
@@ -767,7 +767,7 @@ docker_container 'ulimits' do
   ulimits [
     { 'Name' => 'nofile', 'Soft' => 40_960, 'Hard' => 40_960 },
     { 'Name' => 'core', 'Soft' => 100_000_000, 'Hard' => 100_000_000 },
-    { 'Name' => 'memlock', 'Soft' => 100_000_000, 'Hard' => 100_000_000 }
+    { 'Name' => 'memlock', 'Soft' => 100_000_000, 'Hard' => 100_000_000 },
   ]
   action :run
 end
@@ -823,7 +823,7 @@ docker_container 'uber_options' do
   ulimits [
     'nofile=40960:40960',
     'core=100000000:100000000',
-    'memlock=100000000:100000000'
+    'memlock=100000000:100000000',
   ]
   labels ['foo:bar', 'hello:world']
   action :run
@@ -907,7 +907,7 @@ docker_container 'syslogger' do
   repo 'alpine'
   tag '3.1'
   log_driver 'syslog'
-  log_opts 'syslog-tag=container-syslogger'
+  log_opts 'tag=container-syslogger'
   action :run_if_missing
 end
 
@@ -1008,5 +1008,18 @@ docker_container 'ro_rootfs' do
   tag '3.1'
   command 'ps -ef'
   ro_rootfs true
+  action :run_if_missing
+end
+
+##################
+# sysctl settings
+##################
+
+docker_container 'sysctls' do
+  repo 'alpine'
+  tag '3.1'
+  command '/sbin/sysctl -a'
+  sysctls 'net.core.somaxconn' => '65535',
+          'net.core.xfrm_acq_expires' => '42'
   action :run_if_missing
 end
