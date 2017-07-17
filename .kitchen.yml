@@ -1,96 +1,100 @@
+---
 driver:
-  name: vagrant
+  name: dokken
+  chef_version: latest
+  privileged: true
+  volumes: [
+  '/var/lib/docker', '/var/lib/docker-one', '/var/lib/docker-two'
+  ]
 
-driver_config:
-  customize:
-    cpus: 2
-    memory: 1024
+transport:
+  name: dokken
 
 provisioner:
-  name: chef_zero
-  require_chef_omnibus: true
-  attributes:
-    docker:
-      container_cmd_timeout: 30
+  name: dokken
 
 verifier:
   name: inspec
+  format: doc
 
 platforms:
-- name: centos-6.8
+- name: debian-7
+  driver:
+    image: dokken/debian-7
+    pid_one_command: /sbin/init
   run_list:
-  - recipe[chef-yum-docker]
-
-- name: centos-7.2
-  run_list:
-  - recipe[chef-yum-docker]
-
-- name: fedora-24
-  run_list:
-  - recipe[yum::dnf_yum_compat]
-  - recipe[chef-yum-docker]
-
-- name: debian-7.11
-  run_list:
-  - recipe[apt]
   - recipe[chef-apt-docker]
 
-- name: debian-8.5
+- name: debian-8
+  driver:
+    image: dokken/debian-8
+    pid_one_command: /bin/systemd
   run_list:
-  - recipe[apt]
   - recipe[chef-apt-docker]
+
+- name: centos-6
+  driver:
+    image: dokken/centos-6
+    platform: rhel
+    pid_one_command: /sbin/init
+  run_list:
+    - recipe[chef-yum-docker]
+
+- name: centos-7
+  driver:
+    image: dokken/centos-7
+    platform: rhel
+    pid_one_command: /usr/lib/systemd/systemd
+  run_list:
+    - recipe[chef-yum-docker]
+
+- name: fedora-latest
+  driver:
+    image: dokken/fedora-latest
+    pid_one_command: /usr/lib/systemd/systemd
+  run_list:
+    - recipe[chef-yum-docker]
 
 - name: ubuntu-12.04
+  driver:
+    image: dokken/ubuntu-12.04
+    pid_one_command: /sbin/init
   run_list:
-  - recipe[apt]
   - recipe[chef-apt-docker]
 
 - name: ubuntu-14.04
+  driver:
+    image: dokken/ubuntu-14.04
+    pid_one_command: /sbin/init
   run_list:
-  - recipe[apt]
   - recipe[chef-apt-docker]
 
 - name: ubuntu-16.04
+  driver:
+    image: dokken/ubuntu-16.04
+    pid_one_command: /bin/systemd
   run_list:
-    - recipe[apt]
-  run_list:
-  - recipe[apt]
   - recipe[chef-apt-docker]
+
+- name: ubuntu-17.04
+  driver:
+    image: dokken/ubuntu-17.04
+    pid_one_command: /bin/systemd
+  run_list:
+  - recipe[chef-apt-docker]
+  
+- name: opensuse-13.2
+  driver:
+    image: dokken/opensuse-13.2
+    pid_one_command: /bin/systemd
+
+- name: amazonlinux
+  driver:
+    image: dokken/amazonlinux
+    pid_one_command: /sbin/init
 
 
 suites:
-#####################################
-# docker_installation_tarball resource
-#####################################
-
-- name: installation_tarball-1112
-  includes: [
-    'ubuntu-16.04'
-   ]
-  attributes:
-    docker:
-      version: '1.11.2'
-  run_list:
-  - recipe[docker_test::installation_tarball]
-
-#####################################
-# docker_installation_binary resource
-#####################################
-
-- name: installation_binary-1112
-  includes: [
-    'ubuntu-16.04'
-   ]
-  attributes:
-    docker:
-      version: '1.10.0'
-  run_list:
-  - recipe[docker_test::installation_binary]
-
-#####################################
-# docker_installation_script resource
-#####################################
-
 - name: installation_script_main
   includes: [
     'ubuntu-16.04',
@@ -125,110 +129,53 @@ suites:
 # docker_installation_package resource
 ######################################
 
-- name: installation_package-1123
+- name: installation_package-17031
   includes: [
-    'centos-7.2',
-    'debian-7.11',
-    'debian-8.5',
-    'ubuntu-12.04',
-    'ubuntu-14.04',
-    'ubuntu-16.04',
-    'fedora-24'
-   ]
+    'amazonlinux', # for dokken
+    ]
   attributes:
     docker:
-      version: '1.12.3'
+      version: '17.03.1'
   run_list:
   - recipe[docker_test::installation_package]
 
-#################################
-# docker_service_execute resource
-#################################
-- name: service-execute
-  includes: [
-    'ubuntu-16.04',
-   ]
-  run_list:
-  - recipe[docker_test::service_execute]
-
-- name: service-execute-multi
-  includes: [
-    'ubuntu-16.04',
-   ]
-  run_list:
-  - recipe[docker_test::service_execute_multi]
-
-##################################
-# docker_service_sysvinit resource
-##################################
-- name: service-sysvinit
-  includes: [
-    'debian-7.11'
-   ]
-  run_list:
-  - recipe[docker_test::service_sysvinit]
-
-- name: service-sysvinit-multi
-  includes: [
-    'debian-7.11'
-   ]
-  run_list:
-  - recipe[docker_test::service_sysvinit_multi]
-
-#################################
-# docker_service_upstart resource
-#################################
-- name: service-upstart
+- name: installation_package-17040
   includes: [
     'ubuntu-12.04',
-    'ubuntu-14.04'
    ]
+  attributes:
+    docker:
+      version: '17.04.0'
   run_list:
-  - recipe[docker_test::service_upstart]
+  - recipe[docker_test::installation_package]
 
-- name: service-upstart-multi
+- name: installation_package-17050
   includes: [
-    'ubuntu-12.04',
-    'ubuntu-14.04'
+    'centos-7', # for dokken
+    'debian-7', # for dokken
+    'debian-8', # for dokken
+    'ubuntu-14.04',
+    'ubuntu-16.04',
+    'ubuntu-17.04',
+    'fedora-latest',
    ]
+  attributes:
+    docker:
+      version: '17.05.0'
   run_list:
-  - recipe[docker_test::service_upstart_multi]
-
-#################################
-# docker_service_systemd resource
-#################################
-- name: service-systemd
-  includes: [
-    'centos-7.2',
-    'fedora-24',
-    'debian-8.5',
-    'ubuntu-16.04'
-   ]
-  run_list:
-  - recipe[docker_test::service_systemd]
-
-- name: service-systemd-multi
-  includes: [
-    'centos-7.2',
-    'fedora-24',
-    'debian-8.5',
-    'ubuntu-16.04'
-   ]
-  run_list:
-  - recipe[docker_test::service_systemd_multi]
+  - recipe[docker_test::installation_package]
 
 #######################
 # bulk resource testing
 #######################
 
-- name: resources-1123
+- name: resources-17050
   includes: [
     'ubuntu-16.04',
-    'centos-7.2'
    ]
   attributes:
     docker:
-      version: '1.12.3'
+      version: '17.05.0'
   run_list:
   - recipe[docker_test::default]
   - recipe[docker_test::image]
@@ -237,38 +184,34 @@ suites:
 
 - name: network
   includes: [
-    'ubuntu-16.04'
+    'ubuntu-16.04',
    ]
   attributes:
     docker:
-      version: '1.11.2'
+      version: '17.05.0'
   run_list:
   - recipe[docker_test::default]
   - recipe[docker_test::network]
 
 - name: volume
   includes: [
-    'ubuntu-16.04'
+    'ubuntu-16.04',
    ]
   attributes:
     docker:
-      version: '1.11.2'
+      version: '17.05.0'
   run_list:
   - recipe[docker_test::default]
   - recipe[docker_test::volume]
 
-#####################
-# docker_service auto
-#####################
+######################################
+# service smoke testing
+######################################
 
-- name: auto
-  includes: [
-    'centos-7.2',
-    'fedora-24',
-    'debian-8.5',
-    'ubuntu-12.04',
-    'ubuntu-14.04',
-    'ubuntu-16.04'
-   ]
+- name: smoke
+  excludes: [
+    'centos-6',
+    'opensuse-13.2',
+  ]
   run_list:
-  - recipe[docker_test::auto]
+  - recipe[docker_test::smoke]
