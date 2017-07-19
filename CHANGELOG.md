@@ -2,6 +2,97 @@
 
 This file is used to list changes made in each version of the docker cookbook.
 
+## 2.15.16 (2017-07-14)
+- Issue #849 Fix service restarts on OS using systemd
+
+## 2.15.15 (2017-07-10)
+- upstream systemd config no longer contains the slave mount flag
+
+## 2.15.14 (2017-07-03)
+- Simplifying kitchen config
+- Using dokken-images to speed up tests
+- Updating Amazon Linux to default to 17.03.1
+- Package helper for debian-9
+
+## 2.15.13 (2017-06-15)
+- kill_after property default value to nil
+- only use --raw-logs argument in versions which support it
+
+## 2.15.12 (2017-06-13)
+- reverting gem metadata for now as it requires build tools dependency for the json gem
+
+## 2.15.11 (2017-06-13)
+- make docker.service override match closer to stock
+
+## 2.15.10 (2017-06-13)
+- adding support for chef >= 12.8 metadata gem installs
+- using docker-api 1.33.4
+
+## 2.15.9 (2017-06-13)
+- updating systemd docker.service with changes from official docker install
+- 12.04 doesnt support docker 17.05.0
+
+## 2.15.8 (2017-06-12)
+- Bumping to latest docker version
+
+## 2.15.7 (2017-06-12)
+- Adding Ubuntu Zesty 17.04 support
+
+## 2.15.6 (2017-05-01)
+- #853 - Add network_aliases support
+- #854 - Expose package_name through the docker_service resource
+
+## 2.15.5 (2017-04-19)
+- Fixing up memory related API keys
+- Adding KernelMemory
+- Adding MemorySwappiness
+- Adding MemoryReservation
+- Fixing MemorySwap convergatude (bug #833)
+- Allowing for both integer and string input for all memory values
+
+## 2.15.4 (2017-04-19)
+- Fixing security_opt property
+
+## 2.15.3 (2017-04-18)
+- Updating for 17.04.0
+
+## 2.15.2 (2017-02-15)
+- Reverting 12.15.1 changes
+
+## 2.15.1 (2017-02-15)
+- 799 - Adding service restarts to systemd template resources
+
+## 2.15.0 (2017-02-15)
+- Removing dependency on compat_resource.
+- Now requires Chef 12.5 or higher.
+
+## 2.14.3 (2017-02-14)
+- Defaulting package installation version to docker 1.13.1
+
+## 2.14.3 (2017-02-06)
+- Reverting gem vendor due to c extensions in json dep.
+- Using docker-api-1.33.2 in \_autoload
+
+## 2.14.2 (2017-01-31)
+- Vendoring docker-api-1.33.2
+
+## 2.14.1 (2017-01-31)
+- defaulting to package installation on amazonlinux
+
+## 2.14.0 (2017-01-31)
+- various updates for Docker 1.13.0
+- defaulting to 1.13.0 for docker_installation
+- package name fixes for new debian/ubuntu schemes
+- defaulting restart_policy to nil in docker_resource
+
+## 2.13.11 (2017-01-25)
+- #798 - Temporary "fix" for delayed service restart: using :immediate
+  notification in docker_service resource
+
+## 2.13.10 (2017-01-13)
+- #800 - fixing ubuntu startup script
+- #802 - using chef_version methong only in 12.6.0 and higher
+
 ## 2.13.9 (2016-12-29)
 - 793 - Removing service restarts due to chef-client behavior changes.
 
