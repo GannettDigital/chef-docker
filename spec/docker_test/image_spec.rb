@@ -19,11 +19,11 @@ describe 'docker_test::image' do
   context 'testing default action, default properties' do
     it 'pulls docker_image[hello-world]' do
       expect(chef_run).to pull_docker_image('hello-world').with(
-        api_retries:  3,
+        api_retries: 3,
         destination: nil,
         force: false,
         nocache: false,
-        noprune:  false,
+        noprune: false,
         read_timeout: 120,
         repo: 'hello-world',
         rm: true,
@@ -242,6 +242,12 @@ describe 'docker_test::image' do
 
     it 'pushes docker_image[localhost:5043/someara/name.w.dots]' do
       expect(chef_run).to push_docker_image('localhost:5043/someara/name.w.dots')
+    end
+
+    it 'pushes docker_image[localhost:5043/someara/name.w.dots] with tag v0.1.0' do
+      expect(chef_run).to push_docker_image('localhost:5043/someara/name.w.dots').with(
+        tag: 'v0.1.0'
+      )
     end
 
     it 'login docker_registry[localhost:5043]' do
